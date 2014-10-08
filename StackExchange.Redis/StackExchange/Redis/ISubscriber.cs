@@ -94,5 +94,7 @@ namespace StackExchange.Redis
         /// <remarks>http://redis.io/commands/unsubscribe</remarks>
         /// <remarks>http://redis.io/commands/punsubscribe</remarks>
         Task UnsubscribeAsync(RedisChannel channel, Action<RedisChannel, RedisValue> handler = null, CommandFlags flags = CommandFlags.None);
+
+        Task UnsubscribeAllAsyncBefore(CommandFlags flags = CommandFlags.None);
     }
 }

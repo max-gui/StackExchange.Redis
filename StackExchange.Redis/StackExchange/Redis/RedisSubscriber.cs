@@ -117,6 +117,33 @@ namespace StackExchange.Redis
             return CompletedTask<bool>.Default(asyncState);
         }
 
+        internal Task RemoveAllSubscriptionBefore(CommandFlags flags, object asyncState)
+        {
+            Task last = CompletedTask<bool>.Default(asyncState);
+
+            var unSubStart = DateTime.Now.Ticks;
+            foreach (var pair in subscriptions)
+            {
+                var task = pair.Value.UnsubscribeFromServer(pair.Key, flags, asyncState, false);
+                if (task != null) task.Wait(100);
+
+            }
+            var unSubEnd = DateTime.Now.Ticks;
+            var ts = new TimeSpan((unSubEnd - unSubStart) * 10);
+            Console.WriteLine("itTime:" + (unSubEnd - unSubStart));
+
+            lock (subscriptions)
+            {
+                Thread.Sleep(ts);
+                //subscriptions[0]
+                //pair.Value.Remove(null); // always wipes
+                subscriptions.Clear();
+            }
+
+            //Thread.Sleep(ts);
+            return last;
+        }
+
         internal void ResendSubscriptions(ServerEndPoint server)
         {
             if (server == null) return;
@@ -344,6 +371,11 @@ namespace StackExchange.Redis
         {
             if (channel.IsNullOrEmpty) throw new ArgumentNullException("channel");
             return multiplexer.RemoveSubscription(channel, handler, flags, asyncState);
+        }
+
+        public Task UnsubscribeAllAsyncBefore(CommandFlags flags = CommandFlags.None)
+        {
+            return multiplexer.RemoveAllSubscriptionBefore(flags, asyncState);
         }
     }
 }
